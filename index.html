@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Geolocation Attendance</title>
+  <style>
+    body { background: #f9fafb; font-family: sans-serif; }
+    .container { max-width: 400px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 2px 8px #0001; padding: 24px; }
+    input, button { width: 100%; margin-bottom: 12px; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
+    button { background: #2563eb; color: #fff; border: none; cursor: pointer; }
+    button:disabled { background: #aaa; }
+    .logout { background: #fff; color: #000; border: 1px solid #ccc; }
+    .checkin { background: #16a34a; }
+    .checkout { background: #dc2626; }
+    .message { margin-top: 16px; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Geolocation Attendance</h1>
+    <div id="login-section">
+      <input id="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+      <button id="login-btn">Login</button>
+    </div>
+    <div id="app-section" style="display:none;">
+      <div>
+        <span id="user-email"></span>
+        <button class="logout" id="logout-btn">Logout</button>
+      </div>
+      <div>
+        <div>Your location:</div>
+        <div id="coords">Fetching...</div>
+      </div>
+      <button class="checkin" id="checkin-btn">Check In</button>
+      <button class="checkout" id="checkout-btn">Check Out</button>
+    </div>
+    <div class="message" id="message"></div>
+  </div>
+  <script>
+    let coords = null;
+    let token = localStorage.getItem('token') || '';
+    const loginSection = document.getElementById('login-section');
+    const appSection = document.getElementById('app-section');
+    const messageDiv = document.getElementById('message');
+    const coordsDiv = document.getElementById('coords');
+    const userEmail = document.getElementById('user-email');
+
+    function showMessage(msg) {
+      messageDiv.textContent = msg;
+    }
+
+    function updateCoords() {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          coordsDiv.textContent = coords.lat.toFixed(6) + ', ' + coords.lng.toFixed(6);
+        },
+        err => {
+          coordsDiv.textContent = 'Location access denied';
+        }
+      );
+    }
+
+    function showApp(email) {
+      loginSection.style.display = 'none';
+      appSection.style.display = '';
+      userEmail.textContent = email || 'User';
+      updateCoords();
+    }
+
+    function showLogin() {
+      loginSection.style.display = '';
+      appSection.style.display = 'none';
+    }
+
+    document.getElementById('login-btn').onclick = function() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      // Fake login for demo
+      if (email && password) {
+        token = 'demo-token';
+        localStorage.setItem('token', token);
+        localStorage.setItem('email', email);
+        showApp(email);
+        showMessage('Logged in');
+      } else {
+        showMessage('Enter email and password');
+      }
+    };
+
+    document.getElementById('logout-btn').onclick = function() {
+      token = '';
+      localStorage.removeItem('token');
+      localStorage.removeItem('email');
+      showLogin();
+      showMessage('Logged out');
+    };
+
+    document.getElementById('checkin-btn').onclick = function() {
+      if (!coords) return showMessage('No location available');
+      showMessage('Checked in at ' + coords.lat.toFixed(6) + ', ' + coords.lng.toFixed(6));
+    };
+
+    document.getElementById('checkout-btn').onclick = function() {
+      if (!coords) return showMessage('No location available');
+      showMessage('Checked out at ' + coords.lat.toFixed(6) + ', ' + coords.lng.toFixed(6));
+    };
+
+    // On load
+    if (token) {
+      showApp(localStorage.getItem('email'));
+    } else {
+      showLogin();
+    }
+  </script>
+</body>
+</html>
